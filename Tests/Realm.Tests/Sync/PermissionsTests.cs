@@ -233,7 +233,7 @@ namespace Realms.Tests.Sync
         [Test]
         public void WriteToReadOnlyRealm_ThrowsPermissionDenied()
         {
-            SyncTestHelpers.RunRosTestAsync(async() =>
+            SyncTestHelpers.RunRosTestAsync(async () =>
             {
                 var alice = await SyncTestHelpers.GetUserAsync();
                 var bob = await SyncTestHelpers.GetUserAsync();

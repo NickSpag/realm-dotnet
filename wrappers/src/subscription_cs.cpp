@@ -16,6 +16,7 @@
 #include "schema_cs.hpp"
 #include <realm/parser/parser.hpp>
 #include <realm/parser/query_builder.hpp>
+#include "keypath_helpers.hpp"
 
 using namespace realm;
 using namespace realm::binding;
@@ -37,24 +38,15 @@ REALM_EXPORT Subscription* realm_subscription_create(Results& results, uint16_t*
         auto name = name_len >= 0 ? util::Optional<std::string>(Utf16StringAccessor(name_buf, name_len).to_string()) : none;
         auto optional_ttl = time_to_live >= 0 ? util::Optional<int64_t>(time_to_live) : none;
         
-        IncludeDescriptor inclusion_paths;
-        if (inclusions_len >= 0) {
-            DescriptorOrdering combined_orderings;
-            parser::KeyPathMapping mapping;
-            alias_backlinks(mapping, results.get_realm());
-
-            for (auto i = 0; i < inclusions_len; i++) {
-                auto inclusion_path = inclusions[i].value;
-                DescriptorOrdering ordering;
-                parser::DescriptorOrderingState ordering_state = parser::parse_include_path(inclusion_path);
-                query_builder::apply_ordering(ordering, results.get_query().get_table(), ordering_state, mapping);
-                combined_orderings.append_include(ordering.compile_included_backlinks());
-            }
-            
-            if (combined_orderings.will_apply_include()) {
-                inclusion_paths = combined_orderings.compile_included_backlinks();
-            }
+        std::vector<StringData> paths;
+        for (auto i = 0; i < inclusions_len; i++) {
+            paths.emplace_back(inclusions[i].value);
         }
+
+        parser::KeyPathMapping mapping;
+        realm::alias_backlinks(mapping, *results.get_realm());
+
+        auto inclusion_paths = realm::generate_include_from_keypaths(paths, *results.get_realm(), results.get_object_schema(), mapping);
         
         realm::partial_sync::SubscriptionOptions options {
             name,
