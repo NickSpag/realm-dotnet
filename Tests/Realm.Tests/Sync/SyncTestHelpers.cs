@@ -122,6 +122,11 @@ namespace Realms.Tests.Sync
             EventHandler<ErrorEventArgs> handler = null;
             handler = new EventHandler<ErrorEventArgs>((sender, e) =>
             {
+                if (!(e.Exception is T))
+                {
+                    return;
+                }
+
                 try
                 {
                     Assert.That(sender, Is.TypeOf<Session>());
@@ -139,7 +144,7 @@ namespace Realms.Tests.Sync
 
             session.SimulateError(code, message);
 
-            return tcs.Task;
+            return tcs.Task.Timeout(2000);
         }
 
         public static Task WaitForUploadAsync(Realm realm) => WaitForSyncAsync(realm, upload: true, download: false);
