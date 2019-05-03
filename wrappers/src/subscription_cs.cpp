@@ -48,12 +48,11 @@ REALM_EXPORT Subscription* realm_subscription_create(Results& results, uint16_t*
 
         auto inclusion_paths = realm::generate_include_from_keypaths(paths, *results.get_realm(), results.get_object_schema(), mapping);
         
-        realm::partial_sync::SubscriptionOptions options {
-            name,
-            optional_ttl,
-            update,
-            inclusion_paths
-        };
+        realm::partial_sync::SubscriptionOptions options;
+        options.user_provided_name = name;
+        options.time_to_live_ms = optional_ttl;
+        options.update = update;
+        options.inclusions = inclusion_paths;
         
         auto result = realm::partial_sync::subscribe(results, options);
         return new Subscription(std::move(result));
